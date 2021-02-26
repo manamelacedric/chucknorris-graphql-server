@@ -1,82 +1,51 @@
 import axios from 'axios'
-
 import {
   GraphQLObjectType,
-  GraphQLInt,
   GraphQLString,
-  GraphQLBoolean,
   GraphQLList,
-  GraphQLSchema
+  GraphQLSchema,
 } from 'graphql'
 
-// Launch Type
-const LaunchType = new GraphQLObjectType({
-  name: 'Launch',
+// Joke Type
+const JokeType = new GraphQLObjectType({
+  name: 'Joke',
   fields: () => ({
-    flight_number: { type: GraphQLInt },
-    mission_name: { type: GraphQLString },
-    launch_year: { type: GraphQLString },
-    launch_date_local: { type: GraphQLString },
-    launch_success: { type: GraphQLBoolean },
-    rocket: { type: RocketType }
+    categories: { type: new GraphQLList(GraphQLString) },
+    created_at: { type: GraphQLString },
+    icon_url: { type: GraphQLString },
+    id: { type: GraphQLString },
+    updated_at: { type: GraphQLString },
+    url: { type: GraphQLString },
+    value: { type: GraphQLString },
   })
-});
-
-// Rocket Type
-const RocketType = new GraphQLObjectType({
-  name: 'Rocket',
-  fields: () => ({
-    rocket_id: { type: GraphQLString },
-    rocket_name: { type: GraphQLString },
-    rocket_type: { type: GraphQLString }
-  })
-});
+})
 
 // Root Query
 const RootQuery = new GraphQLObjectType({
   name: 'RootQueryType',
   fields: {
-    launches: {
-      type: new GraphQLList(LaunchType),
+    categories: {
+      type: new GraphQLList(GraphQLString),
       resolve(parent, args) {
         return axios
-          .get('https://api.spacexdata.com/v3/launches')
-          .then(res => res.data);
+          .get('https://api.chucknorris.io/jokes/categories')
+          .then(res => res.data)
       }
     },
-    launch: {
-      type: LaunchType,
+    joke: {
+      type: JokeType,
       args: {
-        flight_number: { type: GraphQLInt }
+        categoryId: { type: GraphQLString }
       },
-      resolve(parent, args) {
+      resolve(parent, { categoryId }) {
         return axios
-          .get(`https://api.spacexdata.com/v3/launches/${args.flight_number}`)
-          .then(res => res.data);
-      }
-    },
-    rockets: {
-      type: new GraphQLList(RocketType),
-      resolve(parent, args) {
-        return axios
-          .get('https://api.spacexdata.com/v3/rockets')
-          .then(res => res.data);
-      }
-    },
-    rocket: {
-      type: RocketType,
-      args: {
-        id: { type: GraphQLInt }
-      },
-      resolve(parent, args) {
-        return axios
-          .get(`https://api.spacexdata.com/v3/rockets/${args.id}`)
-          .then(res => res.data);
+          .get(`https://api.chucknorris.io/jokes/random?category=${args.categoryId}`)
+          .then(res => res.data)
       }
     }
   }
 })
 
-module.exports = new GraphQLSchema({
+export default new GraphQLSchema({
   query: RootQuery
 })
